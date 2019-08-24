@@ -1,5 +1,6 @@
 const billItemsController = require('express').Router();
 const BillItem = require('../../../models/BillItem.js');
+const lodash = require('lodash');
 
 /**
  * @params no params
@@ -112,10 +113,66 @@ billItemsController.get('/:billItem_id/summary', async (req, res) => {
  * @desc Allocate Payment Automatically
  */
 billItemsController.post('/:billItem_id/allocate', (req, res) => {
-  res.json({
-    success: true,
-    message: "Success Allocate"
-  })
+  
+  try {
+    let terhutang = [];
+    let penghutang = [];
+  
+    // Pecah menjadi 2 bagian, penghutang dan terhutang
+    let dataSummary = req.body.dataSummary;
+    for (key in dataSummary) {
+      if (!dataSummary[key].paidOff) {
+        if (dataSummary[key].stillOwedByFriend) {
+          terhutang.push({
+            name: key,
+            hutang: dataSummary[key].stillOwedByFriend
+          });
+        } else {
+          penghutang.push({
+            name: key,
+            hutang: dataSummary[key].stillOweToFriend})
+        }
+      }
+    }
+  
+    terhutang = lodash.orderBy(terhutang, ['name', 'hutang'], ['asc', 'desc']);
+    penghutang = lodash.orderBy(penghutang, ['name','hutang'], ['asc', 'desc']);
+    
+    let autoAllocate = [];
+    
+    for (let i = penghutang.length-1; i >= 0;) {
+      for(let j = 0; j < terhutang.length;) {
+        if (terhutang[j].hutang + penghutang[i].hutang == 0) {
+          autoAllocate.push(`${penghutang[i].name} membayar penuh kepada ${terhutang[j].name} sebesar Rp.${penghutang[i].hutang}`);
+          terhutang[j].hutang = terhutang[j].hutang + penghutang[i].hutang;
+          penghutang[i].hutang -= penghutang[i].hutang;
+          i--;
+          j++;
+        } else if (terhutang[j].hutang + penghutang[i].hutang < 0) {
+          autoAllocate.push(`${penghutang[i].name} membayar penuh kepada ${terhutang[j].name} sebesar Rp.${penghutang[i].hutang}`);        
+          terhutang[j].hutang = terhutang[j].hutang + penghutang[i].hutang;
+          penghutang[i].hutang -= penghutang[i].hutang;
+          i--;
+        } else if (terhutang[j].hutang + penghutang[i].hutang > 0) {
+          autoAllocate.push(`${penghutang[i].name} membayar sebagian kepada ${terhutang[j].name} sebesar Rp.${terhutang[j].hutang * -1}`);        
+          penghutang[i].hutang = penghutang[i].hutang + terhutang[j].hutang;
+          terhutang[j].hutang -= terhutang[j].hutang;
+          j++;
+        }
+      }
+    }
+  
+    res.json({
+      success: true,
+      message: autoAllocate
+    });
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: err
+    });
+  }
 });
 
 /**
