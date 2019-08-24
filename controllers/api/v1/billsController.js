@@ -34,6 +34,17 @@ billsController.get('/:id', (req, res) => {
 });
 
 /**
+ * @params 
+ * @desc Show Bill Summary
+ */
+billsController.get('/:id/summary', (req, res) => {
+  Bill.findById(req.params.id)
+    .then((data) => {
+      res.json(data);
+    });
+});
+
+/**
  * @params billGroupName, billItemList
  * @desc Create Bill Group
  */
@@ -120,6 +131,8 @@ billsController.patch('/addBillItem', (req, res) => {
   Bill
     .findOne({ _id: req.body.billGroupId })
     .then(bill => {
+      if (!bill) return res.json(bill);
+
       bill.billItemList.push({billItem: req.body.billItemId});
       
       bill

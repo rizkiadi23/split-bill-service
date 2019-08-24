@@ -11,6 +11,10 @@ const BillItemSchema = new Schema({
     type: Date,
     default: Date.now
   },
+  attendee: {
+    type: Number,
+    required: true
+  },
   tax: {
     type: Number,
     required: true
