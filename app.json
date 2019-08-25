@@ -1,9 +1,0 @@
-{
-  "name": "Split Bill Service with Node.js",
-  "description": "Simple service to split your bill",
-  "repository": "",
-  "keywords": ["node", "express"],
-  "image": "heroku/node.js",
-  "PORT": 3000,
-  "MONGO_URI": "mongodb://admin_split_bill:AdminSplitBill123@ds135207.mlab.com:35207/db_splitbill_service"
-}

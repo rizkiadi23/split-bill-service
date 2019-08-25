@@ -22,6 +22,7 @@ billsController.get('/:id', (req, res) => {
   Bill
     .findOne({_id: req.params.id})
     .populate('billItemList.billItem')
+    .populate('billItemList.billItem.item.itemOwner.user')
     .then((bill) => {
       res.json(bill);
     })
@@ -123,6 +124,30 @@ billsController.delete('/:id/delete', (req, res) => {
     });
 });
 
+/**
+ * @params billGroupId & billItemId
+ * @desc Delete Bill Item in Bill Group
+ */
+billsController.patch('/:id/delete', (req, res) => {
+  Bill
+    .findById(req.params.id)
+    .then((bill) => {
+      if (!bill) return res.status(404).json({success: false, message: 'Bill item not found'});
+      const updatedBill = bill.billItemList.filter((el) => {
+        return el.billItem != req.body.billItemId
+      });
+
+      bill.billItemList = updatedBill;
+
+      bill
+        .save()
+        .then(() => res.json({success: true, message: "Bill Item Removed from Bill Group"}))
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({success: false, message: "Internal Server Error"});
+    });
+});
 
 /**
  * @params billGroupId, billItemList
