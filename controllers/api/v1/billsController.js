@@ -7,6 +7,7 @@ const Bill = require('../../../models/Bill.js');
  */
 billsController.get('/all', (req, res) => {
   Bill.find()
+    .populate('billItemList.billItem')
     .then(bills => {
       res.json(bills);
     })
